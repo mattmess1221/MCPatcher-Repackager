@@ -14,7 +14,7 @@ public class Utils {
 		case "win":
 			return new File(new File(System.getenv("APPDATA")), ".minecraft");
 		case "mac":
-			return new File(userHome, "Libraries/Application Support/minecraft");
+			return new File(userHome, "Library/Application Support/minecraft");
 		default:
 		case "sun":
 		case "uni":
