@@ -1,5 +1,4 @@
-.gradle/
+src/debug/
 build/
-.classpath
-.settings/
+.*
 bin/
