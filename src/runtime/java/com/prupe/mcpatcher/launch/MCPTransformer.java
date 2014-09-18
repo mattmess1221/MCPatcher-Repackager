@@ -1,4 +1,4 @@
-package com.prupe.mcpatcher.asm;
+package com.prupe.mcpatcher.launch;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -12,11 +12,11 @@ import java.util.zip.ZipFile;
 import net.minecraft.launchwrapper.IClassTransformer;
 import net.minecraft.launchwrapper.Launch;
 
-public class MCPBasicTransformer implements IClassTransformer {
+public class MCPTransformer implements IClassTransformer {
 
 	private ZipFile zip;
 
-	public MCPBasicTransformer(){
+	public MCPTransformer(){
 		try{
 			URL[] urls = Launch.classLoader.getURLs();
 			for(URL url : urls){

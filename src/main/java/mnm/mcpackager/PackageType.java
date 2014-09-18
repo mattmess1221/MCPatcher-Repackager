@@ -1,10 +1,5 @@
 package mnm.mcpackager;
 
-import static mnm.mcpackager.Constants.MCPATCHER_ASSETS;
-import static mnm.mcpackager.Constants.MCPATCHER_DATA_PACK;
-import static mnm.mcpackager.Constants.PROPERTIES;
-import static mnm.mcpackager.Constants.RUNTIME;
-
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -24,29 +19,39 @@ import java.util.zip.ZipEntry;
 
 import org.apache.commons.io.IOUtils;
 
-public abstract class PackageTypes {
-	
+public enum PackageType {
+
 	/**
 	 * Creates a jar to be added to the libraries section in the json.<br/>
 	 * Doesn't require the addition of LaunchWrapper or ASM.<br/>
 	 * If using Forge or LiteLoader, it can be put in the mods dir.
 	 */
-	public static final PackageTypes LIBRARY = new PackageLibrary();
-	
-	/**
-	 * Happy forge :)<br/>
-	 * Similar to Library, but uses advanced patching and ASM transforming.<br/>
-	 * Requires LaunchWrapper and ASM.
-	 */
-	public static final PackageTypes TRANSFORMER = new PackageTransformer();
-	
-	private PackageTypes(){
+	LIBRARY {
+
+		@Override
+		public String toString() {
+			return Constants.DROPDOWN_LIBRARY_NAME;
+		}
+
+		@Override
+		public String getDescription() {
+			return "The basic package type.\n"
+					+ " Can be put in the json or loaded by Forge/LiteLoader.\n"
+					+ " Doesn't require ASM or LaunchWrapper.";
+		}
 		
-	}
-	
+		@Override
+		protected String[] getClassesToAdd(PatchedJar patchedJar) {
+			List<String> list = new ArrayList<String>();
+			list.addAll(Arrays.asList(patchedJar.modifiedClasses));
+			list.addAll(Arrays.asList(patchedJar.addedClasses));
+			return list.toArray(new String[0]);
+		}
+	};
+
 	protected void addPatcherToJar(JarOutputStream jos, PatchedJar pj) throws IOException{
 		String[] toAdd = this.getClassesToAdd(pj);
-		JarFile jf = pj.getOldJar();
+		JarFile jf = pj.getJar();
 		for(String add : toAdd){
 			try{
 				ZipEntry ze = new ZipEntry(add.replace('.', '/').concat(".class"));
@@ -59,12 +64,12 @@ public abstract class PackageTypes {
 	}
 	
 	protected void addPatcherAssetsToJar(JarOutputStream jos, PatchedJar patchedJar){
-		JarFile jf = patchedJar.getOldJar();
+		JarFile jf = patchedJar.getJar();
 		Enumeration<JarEntry> enumer = jf.entries();
 		while(enumer.hasMoreElements()){
 			try {
 				JarEntry entry = enumer.nextElement();
-				if(entry.getName().contains(MCPATCHER_ASSETS) || entry.getName().equals(PROPERTIES)){
+				if(entry.getName().contains(Constants.MCPATCHER_ASSETS) || entry.getName().equals(Constants.PROPERTIES)){
 					this.addToJar(jos, jf.getInputStream(entry), entry);
 				}
 			} catch (IOException e) {
@@ -77,7 +82,7 @@ public abstract class PackageTypes {
 	protected void addExtraToJar(JarOutputStream jos) throws IOException{
 		JarInputStream jis = null;
 		try{
-			InputStream is = ClassLoader.getSystemClassLoader().getResourceAsStream(RUNTIME);
+			InputStream is = ClassLoader.getSystemClassLoader().getResourceAsStream(Constants.RUNTIME);
 			jis = new JarInputStream(is);
 			while(true){
 				try{
@@ -120,6 +125,7 @@ public abstract class PackageTypes {
 	}
 	
 	protected JarOutputStream createJar(File file, Manifest manifest) throws FileNotFoundException, IOException{
+		file.getParentFile().mkdirs();
 		System.out.println(String.format("Creating new jar file at '%s'", file.getPath()));
 		return new JarOutputStream(new FileOutputStream(file), manifest);
 	}
@@ -142,57 +148,5 @@ public abstract class PackageTypes {
 	
 	public abstract String getDescription();
 	
-	private static class PackageLibrary extends PackageTypes {
-
-		@Override
-		public String toString() {
-			return Constants.DROPDOWN_LIBRARY_NAME;
-		}
-
-		@Override
-		public String getDescription() {
-			return "The basic package type.\n"
-					+ " Can be put in the json or loaded by Forge/LiteLoader.\n"
-					+ " Doesn't require ASM or LaunchWrapper.";
-		}
-		
-		@Override
-		protected String[] getClassesToAdd(PatchedJar patchedJar) {
-			List<String> list = new ArrayList<String>();
-			list.addAll(Arrays.asList(patchedJar.modifiedClasses));
-			list.addAll(Arrays.asList(patchedJar.addedClasses));
-			return list.toArray(new String[0]);
-		}
-	}
 	
-	private static class PackageTransformer extends PackageTypes {
-		
-		@Override
-		public String toString() {
-			return Constants.DROPDOWN_TRANSFORMER_NAME;
-		}
-
-		@Override
-		public String getDescription() {
-			return "Uses advanced ASM to patch the Minecraft\n"
-					+ " jar at runtime.  Doesn't actually package\n"
-					+ " Mojang classes, making it legal to redistribute.";
-		}
-		
-		@Override
-		protected void addPatcherToJar(JarOutputStream jos, PatchedJar patchedJar) throws IOException{
-			System.out.println("Generating patches...");
-			VanillaJar vanillaJar = patchedJar.getVanilla();
-			Difference diff = new Difference(patchedJar, vanillaJar);
-			ByteArrayOutputStream baos = new ByteArrayOutputStream();
-			diff.pack(baos);
-			this.addToJar(jos, baos.toByteArray(), new ZipEntry(MCPATCHER_DATA_PACK));
-			super.addPatcherToJar(jos, patchedJar);
-		}
-		
-		@Override
-		protected String[] getClassesToAdd(PatchedJar patchedJar) {
-			return patchedJar.addedClasses;
-		}
-	}
 }

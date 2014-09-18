@@ -1,35 +1,28 @@
 package com.prupe.mcpatcher.launch;
 
 import java.io.File;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
 import net.minecraft.launchwrapper.ITweaker;
+import net.minecraft.launchwrapper.Launch;
 import net.minecraft.launchwrapper.LaunchClassLoader;
-
-import com.prupe.mcpatcher.asm.MCPAdvancedTransformer;
-import com.prupe.mcpatcher.asm.MCPBasicTransformer;
 
 public class MCPatcherTweaker implements ITweaker {
 	
-	private List<String> args = new ArrayList<String>();
+	private List<String> arguments = new ArrayList<String>();
 
 	@Override
 	public void acceptOptions(List<String> args, File gameDir, File assetsDir, String profile) {
-		this.args.addAll(args);
-		this.args.add("--gameDir");   this.args.add(gameDir.getPath());
-		this.args.add("--assetsDir"); this.args.add(assetsDir.getPath());
-		this.args.add("--version");	  this.args.add(profile);
+		this.arguments.addAll(args);
+		this.arguments.add("--gameDir");   this.arguments.add(gameDir.getPath());
+		this.arguments.add("--assetsDir"); this.arguments.add(assetsDir.getPath());
+		this.arguments.add("--version");	  this.arguments.add(profile);
 	}
 
 	@Override
 	public void injectIntoClassLoader(LaunchClassLoader classLoader) {
-		InputStream stream = classLoader.getResourceAsStream("mcpatcher_data.pack");
-		if(stream == null)
-			classLoader.registerTransformer(MCPBasicTransformer.class.getName());
-		else
-			classLoader.registerTransformer(MCPAdvancedTransformer.class.getName());	
+		classLoader.registerTransformer(MCPTransformer.class.getName());
 	}
 
 	@Override
@@ -37,9 +30,25 @@ public class MCPatcherTweaker implements ITweaker {
 		return "net.minecraft.client.main.Main";
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public String[] getLaunchArguments() {
-		return new String[0];
+		List<String> list = new ArrayList<String>();
+		List<String> args = (List<String>) Launch.blackboard.get("ArgumentList");
+		if(args == null)
+			args = new ArrayList<String>();
+		for(int i = 0; i < this.arguments.size(); i+=2){
+			String s = this.arguments.get(i);
+			if(s.startsWith("--")){
+				if(!args.contains(s)){
+					list.add(s);
+					list.add(this.arguments.get(i+1));
+				}
+			}else{
+				i--;
+			}
+		}
+		return list.toArray(new String[0]);
 	}
 
 }

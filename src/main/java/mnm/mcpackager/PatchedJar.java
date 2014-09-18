@@ -20,7 +20,7 @@ import com.google.gson.JsonObject;
 
 import static mnm.mcpackager.Constants.*;
 
-public class PatchedJar {
+public class PatchedJar implements VersionJar{
 	
 	private File file;
 	private JarFile jarFile;
@@ -109,7 +109,7 @@ public class PatchedJar {
 						(forge ? "-forge" : fml ? "-fml" : "")));
 	}
 
-	public JarFile getOldJar() {
+	public JarFile getJar() {
 		return this.jarFile;
 	}
 	
@@ -123,6 +123,10 @@ public class PatchedJar {
 	
 	public String getVersion(){
 		return this.vanillaJar.getVersion();
+	}
+	
+	public boolean isVanilla(){
+		return false;
 	}
 	
 }

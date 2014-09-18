@@ -4,7 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.jar.JarFile;
 
-public class VanillaJar {
+public class VanillaJar implements VersionJar{
 	
 	private String version;
 	private File file;
@@ -26,5 +26,9 @@ public class VanillaJar {
 	
 	public JarFile getJar(){
 		return jarFile;
+	}
+	
+	public boolean isVanilla(){
+		return true;
 	}
 }

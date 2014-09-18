@@ -14,8 +14,9 @@
  */
 package mnm.mcpackager;
 
-import mnm.mcpackager.gui.Select;
 import mnm.mcpackager.gui.Window;
+
+import java.awt.EventQueue;
 
 /**
  * <h1>MCPatcher Repackager</h1>
@@ -30,12 +31,17 @@ import mnm.mcpackager.gui.Window;
 public class Repackage extends Thread {
 	
 	public static int errors = 0;
-	private PackageTypes method;
 
-	private static Window window = new Window();
+	private static Window window;
 
 	public static void main(String[] args) throws InterruptedException {
-		window.setVisible(true);
+		EventQueue.invokeLater(new Runnable(){
+			@Override
+			public void run() {
+				window = new Window();
+				window.getFrame().setVisible(true);
+			}
+		});
 	}
 	
 	public static Window getWindow(){
@@ -46,19 +52,19 @@ public class Repackage extends Thread {
 		super("Repackager");
 	}
 	
-	public void action(){
+	@Override
+	public void start(){
 		errors = 0;
-		this.start();
+		super.start();
 	}
 	
 	public void run(){
 		try {
-			if (Select.jarFile == null) {
+			if (window.getJar() == null) {
 				throw new IllegalArgumentException("No jar selected");
 			}
-			this.method = window.getPackageMethod();
-			PatchedJar patchedJar = new PatchedJar(Select.jarFile);
-			method.repackage(patchedJar);
+			PatchedJar patchedJar = new PatchedJar(window.getJar());
+			PackageType.LIBRARY.repackage(patchedJar);
 			System.out.println("Created new Jar at " + patchedJar.getNewJar().getPath() + (errors > 0 ? "\nFinished with " + errors + " error"+(errors>1?"s":"") : "") + ".");
 			window.newDialog("Created new Jar at " + patchedJar.getNewJar().getPath() + (errors > 0 ? "\nFinished with " + errors + " error" + (errors>1?"s":"") + ". (see console)" : ""));
 		} catch (Exception e1) {

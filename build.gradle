@@ -1,8 +1,8 @@
 apply plugin: 'java'
 apply plugin: 'eclipse'
 
-sourceCompatibility = 1.7
-targetCompatibility = 1.7
+sourceCompatibility = 1.6
+targetCompatibility = 1.6
 
 archivesBaseName = "MCPatcher-Repackager"
 version = "1.3"
@@ -10,40 +10,30 @@ version = "1.3"
 repositories{
 	mavenCentral()
 	maven{
-		name = "javaxdelta"
-		url = "http://javaxdelta.sourceforge.net/maven2/repository/"
-	}
-	maven{
 		name = "minecraft"
 		url = "https://libraries.minecraft.net/"
 	}
 }
-configurations{
-	redist
-	mcruntime
-}
+configurations{ redist }
 sourceSets{
-	runtime{
-		compileClasspath += main.compileClasspath
-	}
+	runtime{ compileClasspath += main.compileClasspath }
 	debug{}
 }
 dependencies{
-	// package with everything
-	mcruntime 'com.nothome:javaxdelta:2.0.1'
-	redist configurations.mcruntime
 	// only package with main
 	redist 'com.google.code.gson:gson:2.2.4'
 	redist 'commons-io:commons-io:2.4'
-	//redist 'org.ow2.asm:asm-debug-all:5.0.3'
 	compile configurations.redist
 	// don't package
-	compile 'net.minecraft:launchwrapper:1.10'
+	compile ('net.minecraft:launchwrapper:1.11'){
+		exclude group: 'org.lwjgl.lwjgl', module: 'lwjgl'
+		exclude group: 'org.apache.logging.log4j'
+		exclude group: 'org.ow2.asm', module:'asm-debug-all'
+		exclude group: 'net.sf.jopt-simple', module: 'jopt-simple'
+	}
 }
 task runtimeJar(type:Jar){
 	from sourceSets.runtime.output
-	from{ configurations.mcruntime.collect{ it.isDirectory() ? it : zipTree(it) }}
-	exclude "**/maven/**"
 	archiveName "runtime.jar"
 }
 task copyJar(type:Copy){
@@ -51,13 +41,15 @@ task copyJar(type:Copy){
 	from runtimeJar.archivePath
 	into "src/debug/resources/"
 }
+task cleanJar(type:Delete){
+	delete 'src/debug'
+}
+clean.dependsOn cleanJar
 eclipseClasspath.dependsOn copyJar
 jar{
-	dependsOn runtimeJar
+	dependsOn copyJar
 	from{ configurations.redist.collect{ it.isDirectory() ? it : zipTree(it) }}
 	from file(runtimeJar.archivePath)
 	exclude "**/maven/**"
-	manifest{
-		attributes "Main-Class": "mnm.mcpackager.Repackage"
-	}
+	manifest{ attributes "Main-Class": "mnm.mcpackager.Repackage" }
 }

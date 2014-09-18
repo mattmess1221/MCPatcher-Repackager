@@ -1,6 +1,7 @@
 package mnm.mcpackager;
 
 import java.io.File;
+import java.net.URI;
 
 public class Constants {
 
@@ -13,11 +14,10 @@ public class Constants {
 	
 	// File Names
 	public final static String RUNTIME = "runtime.jar";
-	public final static String MCPATCHER_DATA_PACK = "mcpatcher_data.pack";
 	public final static String MCPATCHER_ASSETS = "assets/minecraft/mcpatcher/";
+	public final static String PROPERTIES = "mcpatcher.properties";
 	
 	// MCPatcher properties entry names
-	public final static String PROPERTIES = "mcpatcher.properties";
 	public final static String PROP_MINECRAFT_VERSION = "minecraftVersion";
 	public final static String PROP_PATCHER_VERSION = "patcherVersion";
 	public final static String PROP_ADDED_CLASSES = "addedClasses";
@@ -31,21 +31,20 @@ public class Constants {
 	
 	// Packaging methods
 	public final static String DROPDOWN_LIBRARY_NAME = "Library";
-	public final static String DROPDOWN_TRANSFORMER_NAME = "Transformer (WIP)";
+	
+	// URLs
+	public final static URI URI_SOURCE = URI.create("https://github.com/killjoy1221/MCPatcher-Repackager/");
+	public final static URI URI_GSON = URI.create("https://code.google.com/p/google-gson/");
+	public final static URI URI_COMMONS_IO = URI.create("http://commons.apache.org/io/");
+	public final static URI URI_LAUNCH_WRAPPER = URI.create("https://github.com/Mojang/LegacyLauncher/");
+	public static final URI URI_MCPATCHER = URI.create("http://www.minecraftforum.net/forums/topic/1226351-1");
 	
 	private static File getMinecraftDir() {
-		switch (OS_NAME.substring(0, 3)) {
-		case "win":
+		if(OS_NAME.contains("win"))
 			return new File(new File(System.getenv("APPDATA")), ".minecraft");
-		case "mac":
+		else if(OS_NAME.contains("mac"))
 			return new File(USER_HOME, "Library/Application Support/minecraft");
-		default:
-		case "sun":
-		case "uni":
-		case "lin":
+		else
 			return new File(USER_HOME, ".minecraft");
-		}
 	}
-
-
 }
