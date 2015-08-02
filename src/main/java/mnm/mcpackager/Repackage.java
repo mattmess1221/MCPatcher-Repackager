@@ -15,6 +15,14 @@
 package mnm.mcpackager;
 
 import java.awt.EventQueue;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.jar.JarFile;
+import java.util.zip.ZipEntry;
+
+import org.apache.commons.io.IOUtils;
 
 import mnm.mcpackager.gui.Window;
 
@@ -34,16 +42,51 @@ public class Repackage extends Thread {
     public static int errors = 0;
 
     private static Window window;
+    private static List<File> detectedJars;
 
     public static void main(String[] args) throws InterruptedException {
+        window = new Window();
         EventQueue.invokeLater(new Runnable() {
 
             @Override
             public void run() {
-                window = new Window();
                 window.getFrame().setVisible(true);
             }
         });
+        detectPatchedJars();
+        window.getFoundJars().removeAll();
+        window.getFoundJars().addItem("");
+        for (File f : detectedJars) {
+            window.getFoundJars().addItem(f.getParentFile().getName());
+        }
+        if (detectedJars.isEmpty()) {
+            window.getFoundJars().addItem("No jars found.");
+        }
+    }
+
+    private static void detectPatchedJars() {
+        detectedJars = new ArrayList<File>();
+        File vers = new File(Constants.MINECRAFT_DIR, "versions");
+        // go through the directories
+        for (File f : vers.listFiles()) {
+            File file = new File(f, f.getName() + ".jar");
+            if (file.isFile()) {
+                JarFile jar = null;
+                try {
+                    jar = new JarFile(file);
+                    ZipEntry ze = jar.getEntry("mcpatcher.properties");
+                    if (ze == null) {
+                        continue;
+                    }
+                    detectedJars.add(file);
+                    System.out.println("Found valid patched jar in " + f.getName());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } finally {
+                    IOUtils.closeQuietly(jar);
+                }
+            }
+        }
     }
 
     public static Window getWindow() {
